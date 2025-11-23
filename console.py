@@ -7,10 +7,7 @@ parser = argparse.ArgumentParser(description='Calculate the average of a list of
 # Add an argument
 parser.add_argument('path', type=Path, help='Absolute or relative path to the code file')
 parser.add_argument(
-    '--config',
-    type=Path,
-    default='Саша не отвечает по поводу конфига',
-    help='Absolute or relative path to the config file',
+    '--config', type=Path, default='pyproject.toml', help='Absolute or relative path to the config file'
 )
 
 args = parser.parse_args()
