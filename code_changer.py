@@ -1,15 +1,26 @@
 from dataclasses import dataclass
+from typing import TypedDict
 
 
 @dataclass
 class Position:
+    """Position использует 0-based индексацию строк!
+    Position(0, 0, 0) соответствует первой строке файла"""
+
     start_line: int
     pos: int
     end_line: int = 0
 
 
+class Element(TypedDict):
+    key: str
+    position: Position
+    docstring: str
+
+
 class CodeChanger:
     """Класс для добавления документации в код"""
+
     """
     на вход: {
         "name_of_file/ClassName": (Position(start_line, pos, end_line), "doc"),
@@ -17,7 +28,8 @@ class CodeChanger:
         "name_of_file/ClassName/method_name": (Position(start_line, pos, end_line), "doc")
     }
     """
-    def __init__(self, config: dict[str, str] | None= None):
+
+    def __init__(self, config: dict[str, str] | None = None):
         # config - настройки программы (в будущем)
         self.config = config or {}
 
@@ -28,9 +40,9 @@ class CodeChanger:
         for file_path, elements in files_data.items():
             self._process_single_file(file_path, elements)
 
-    def _group_by_files(self, ai_data: dict[str, tuple[Position, str]]) -> dict[str, list[dict[str, str | Position]]]:
+    def _group_by_files(self, ai_data: dict[str, tuple[Position, str]]) -> dict[str, list[Element]]:
         """Группирует элементы по файлам"""
-        files_data = {}
+        files_data: dict[str, list[Element]] = {}
 
         for key, (position, docstring) in ai_data.items():
             file_path = key.split('/')[0]
@@ -38,31 +50,26 @@ class CodeChanger:
             if file_path not in files_data:
                 files_data[file_path] = []
 
-            files_data[file_path].append({
-                'key': key,
-                'position': position,
-                'docstring': docstring
-            })
+            files_data[file_path].append({'key': key, 'position': position, 'docstring': docstring})
 
         return files_data
 
-    def _process_single_file(self, file_path: str, elements: list[dict[str, str | Position]]) -> None:
+    def _process_single_file(self, file_path: str, elements: list[Element]) -> None:
         """Обрабатывает один файл"""
         try:
             lines = self._read_file(file_path)
 
-            # Сортируем по убыванию start_line (будем вставлять документацию, начиная с конца файла, чтобы позиция не изменилась)
+            # Сортируем по убыванию start_line (будем вставлять док., начиная с конца файла, чтобы позиция не измен.)
             elements.sort(key=lambda x: x['position'].start_line, reverse=True)
 
             modified = False
             for element in elements:
+                position: Position = element['position']
+                docstring: str = element['docstring']
+
                 # проверяем, нет ли уже docstring
-                if not self._has_existing_docstring(lines, element['position']):
-                    lines = self._insert_docstring(
-                        lines,
-                        element['position'],
-                        element['docstring']
-                    )
+                if not self._has_existing_docstring(lines, position):
+                    lines = self._insert_docstring(lines, position, docstring)
                     modified = True
 
             if modified:
@@ -86,56 +93,119 @@ class CodeChanger:
         with open(file_path, 'w', encoding='utf-8') as f:
             f.writelines(lines)
 
-    #Пока с этим методом есть проблема: мы проверяем сразу след строку, но если в метод передается много аргументов (с переносами строк), то все ломается. надо переделывать
+    def _find_end_of_definition(self, lines: list[str], start_line: int) -> int:
+        """Находит конец определения (упрощенная и надежная версия)"""
+        if start_line < 0:
+            return 0
+        if start_line >= len(lines):
+            return len(lines) - 1
+
+        current_line = start_line
+
+        # Для классов - ищем следующую непустую строку после class
+        if lines[start_line].strip().startswith('class '):
+            current_line += 1
+            while current_line < len(lines):
+                line = lines[current_line].strip()
+                if line and not line.startswith('@'):  # Пропускаем декораторы
+                    return current_line - 1
+                current_line += 1
+            return start_line
+
+        # Для функций/методов - ищем двоеточие
+        elif lines[start_line].strip().startswith('def '):
+            paren_depth = 0
+            bracket_depth = 0
+            brace_depth = 0
+
+            while current_line < len(lines):
+                line = lines[current_line].rstrip()
+
+                # Считаем скобки
+                for char in line:
+                    if char == '(':
+                        paren_depth += 1
+                    elif char == ')':
+                        paren_depth -= 1
+                    elif char == '[':
+                        bracket_depth += 1
+                    elif char == ']':
+                        bracket_depth -= 1
+                    elif char == '{':
+                        brace_depth += 1
+                    elif char == '}':
+                        brace_depth -= 1
+
+                # Если нашли двоеточие и все скобки закрыты
+                if ':' in line and paren_depth <= 0 and bracket_depth <= 0 and brace_depth <= 0:
+                    return current_line
+
+                current_line += 1
+
+        return start_line
+
     def _has_existing_docstring(self, lines: list[str], position: Position) -> bool:
         """Проверяет, есть ли уже docstring после указанной позиции"""
         start_line = position.start_line
 
-        # Ищем следующую непустую строку после определения метода/класса
-        current_line = start_line + 1
-        while current_line < len(lines) and current_line <= start_line + 3:
-            line = lines[current_line].strip()
+        if start_line >= len(lines):
+            return False
+
+        end_line = self._find_end_of_definition(lines, start_line)
+
+        if end_line >= len(lines) - 1:
+            return False
+
+        for i in range(end_line + 1, min(end_line + 10, len(lines))):
+            line = lines[i].strip()
+
+            if not line or line.startswith('#'):
+                continue
 
             if line.startswith(('"""', "'''")):
                 return True
 
-            # Если нашли непустую строку без docstring - значит docstring нет
-            if line and not line.startswith(('"""', "'''")):
-                return False
-
-            current_line += 1
+            return False
 
         return False
 
     def _insert_docstring(self, lines: list[str], position: Position, docstring: str) -> list[str]:
-        """Вставляет docstring в код"""
-        start_line = position.start_line
+        """Вставляет docstring (упрощенная версия)"""
+        if position.start_line >= len(lines):
+            return lines
 
-        current_line = lines[start_line]
-        indent = len(current_line) - len(current_line.lstrip()) # кол-во пробелов в начале строки(отступы)
+        if not docstring.strip():
+            return lines
+
+        start_line = position.start_line
+        end_line = self._find_end_of_definition(lines, start_line)
+
+        target_line = lines[end_line]
+        indent = len(target_line) - len(target_line.lstrip())
         indent_str = ' ' * indent
 
-        # форматируем docstring
         formatted_docstring = self._format_docstring(docstring, indent_str)
 
-        return lines[:start_line + 1] + formatted_docstring + lines[start_line + 1:]
+        return lines[: end_line + 1] + formatted_docstring + lines[end_line + 1 :]
 
     def _format_docstring(self, docstring: str, indent: str) -> list[str]:
         """Форматирует docstring с правильными отступами"""
-        if not docstring.strip():
+        if not docstring or not docstring.strip():
             return []
 
         docstring_lines = docstring.strip().split('\n')
         formatted_lines = []
 
+        extra_indent = '    '
+
         # однострочный docstring
         if len(docstring_lines) == 1:
-            formatted_lines.append(f'{indent}    """{docstring_lines[0]}"""\n')
+            formatted_lines.append(f'{indent}{extra_indent}"""{docstring_lines[0]}"""\n')
         else:
             # многострочный docstring
-            formatted_lines.append(f'{indent}    """\n')
+            formatted_lines.append(f'{indent}{extra_indent}"""\n')
             for line in docstring_lines:
-                formatted_lines.append(f'{indent}    {line}\n')
-            formatted_lines.append(f'{indent}    """\n')
+                formatted_lines.append(f'{indent}{extra_indent}{line}\n')
+            formatted_lines.append(f'{indent}{extra_indent}"""\n')
 
         return formatted_lines
