@@ -1,6 +1,6 @@
 import os.path
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import NamedTuple
 
 FUNC_PATTERN = re.compile(r'^def (\w+)')
@@ -28,6 +28,12 @@ class Position:
         return f"(lines:{self.start_line}-{self.end_line}, offset:{self.pos})"
 
 
+@dataclass
+class PosWithBody:
+    position: Position
+    body: list[str] = field(default_factory=list)
+
+
 class Parser:
     """
     Парсер. Он парсит файл
@@ -37,18 +43,18 @@ class Parser:
     """
 
     def __init__(self) -> None:
-        self._dictionary: dict[str, Position] = {}
+        self._dictionary: dict[str, PosWithBody] = {}
         self._stack: list[ClassOrFunc] = []
         self._path_to_current_file = ""
 
-    def parse_from_file(self, filename: str) -> dict[str, Position]:
+    def parse_from_file(self, filename: str) -> dict[str, PosWithBody]:
         """Основная функция - считывает файл"""
         with open(filename, 'r') as f:
             self._path_to_current_file = os.path.realpath(filename)
             lines = f.readlines()
         return self._parse(lines)
 
-    def _parse(self, lines: list[str]) -> dict[str, Position]:
+    def _parse(self, lines: list[str]) -> dict[str, PosWithBody]:
         """Ищет функции и классы в списке строк"""
         decorator_counter = 0
         last_offset = 0
@@ -60,7 +66,7 @@ class Parser:
             if offset <= last_offset and not stripped.startswith(
                 ')'
             ):  # обработка случая функций/классов с длинным началом
-                self._update_previous(offset, i)
+                self._update_previous(offset, i, lines)
             if re.match(DECORATOR_PATTERN, stripped):
                 decorator_counter += 1
             if self._check_match(FUNC_PATTERN, stripped, i - decorator_counter, offset) or self._check_match(
@@ -69,15 +75,17 @@ class Parser:
                 decorator_counter = 0
                 last_offset = offset
 
-        self._update_previous(0, len(lines) + 1)
+        self._update_previous(0, len(lines) + 1, lines)
         return self._dictionary
 
-    def _update_previous(self, offset: int, line_num: int) -> None:
+    def _update_previous(self, offset: int, line_num: int, lines: list[str]) -> None:
         """Указывает конец уже добавленных в словарь классов и функций"""
         for prev in reversed(self._stack):
-            if prev.pos < offset or self._dictionary[prev.path].end_line > 0:
-                return
-            self._dictionary[prev.path].end_line = line_num - 1
+            if prev.pos < offset or self._dictionary[prev.path].position.end_line > 0:
+                continue
+            start, end = self._dictionary[prev.path].position.start_line, line_num - 1
+            self._dictionary[prev.path].position.end_line = end
+            self._dictionary[prev.path].body = lines[start:end]
 
     def _check_match(self, pattern: re.Pattern[str], line: str, line_num: int, offset: int) -> bool:
         """Проверяет, является ли строка функцией/классом, если да - добавляет её"""
@@ -100,12 +108,4 @@ class Parser:
                 previous = self._stack[-1]
             class_or_func = ClassOrFunc(f"{previous.path}/{func_name}", pos)
         self._stack.append(class_or_func)
-        self._dictionary[class_or_func.path] = Position(line_num, pos)
-
-
-# пример использования
-if __name__ == '__main__':
-    parser = Parser()
-    result = parser.parse_from_file('example.py')
-    for path in result:
-        print(path, result[path])
+        self._dictionary[class_or_func.path] = PosWithBody(Position(line_num, pos))
