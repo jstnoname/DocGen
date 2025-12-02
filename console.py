@@ -1,22 +1,11 @@
 ﻿import argparse
-import logging
 import sys
+from parser import Parser, Position, PosWithBody
 from pathlib import Path
-from typing import Any
-
-# Настройка логирования
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-)
-logger = logging.getLogger(__name__)
 
 # Импорты модулей (будут реализованы позже)
-# from dataclasses import dataclass
-# from parser import Parser
 # from ai_module import AIModule
-# from code_changer import CodeChanger, Position
+# from code_changer import CodeChanger
 
 
 class DocGen:
@@ -50,8 +39,6 @@ class DocGen:
         args = self.parser.parse_args()
         self.code_path = args.path
         self.config_path = args.config
-        logger.info(f'Путь к коду: {self.code_path}')
-        logger.info(f'Путь к конфигу: {self.config_path}')
 
     def _validate_paths(self) -> bool:
         """Валидация путей к файлам."""
@@ -65,34 +52,25 @@ class DocGen:
     def _check_path(path: Path | None) -> bool:
         """Проверка существования файла по указанному пути."""
         if path is None:
-            logger.error('Путь не указан')
             return False
         if not path.exists():
-            logger.error(f'{path} не существует')
             return False
         if not path.is_file():
-            logger.error(f'{path} не является файлом')
             return False
-        logger.debug(f'Путь {path} валиден')
         return True
 
-    def _run_parser(self) -> dict[str, Any]:
+    def _run_parser(self) -> dict[str, PosWithBody]:
         """
         Запуск парсера для анализа кода.
 
         Returns:
             dict: Словарь с распарсенными данными о коде
         """
-        logger.info('Запуск парсера...')
-        # TODO: Реализовать когда будет готов модуль parser
-        # parser = Parser(str(self.code_path))
-        # parsed_data = parser.parse()
-        # return parsed_data
+        parser = Parser()
+        parsed_data = parser.parse_from_file(str(self.code_path))
+        return parsed_data
 
-        logger.warning('Модуль парсера еще не реализован')
-        return {'code_structure': {}, 'functions': [], 'classes': []}
-
-    def _generate_documentation(self, parsed_data: dict[str, Any]) -> dict[str, tuple[Any, str]]:
+    def _generate_documentation(self, parsed_data: dict[str, PosWithBody]) -> dict[str, tuple[Position, str]]:
         """
         Генерация документации с помощью AI.
 
@@ -106,16 +84,13 @@ class DocGen:
                 "name_of_file/ClassName/method_name": (Position(start_line, pos, end_line), "doc")
             }
         """
-        logger.info('Генерация документации с помощью AI...')
         # TODO: Реализовать когда будет готов модуль ai_module
         # ai = AIModule(self.config_path)
         # documentation = ai.generate(parsed_data)
         # return documentation
-
-        logger.warning('AI модуль еще не реализован')
         return {}
 
-    def _apply_changes(self, ai_data: dict[str, tuple[Any, str]]) -> None:
+    def _apply_changes(self, ai_data: dict[str, tuple[Position, str]]) -> None:
         """
         Применение изменений к коду (добавление документации).
 
@@ -127,13 +102,10 @@ class DocGen:
                     "name_of_file/ClassName/method_name": (Position(start_line, pos, end_line), "doc")
                 }
         """
-        logger.info('Применение изменений к коду...')
         # TODO: Реализовать когда будет готов модуль code_changer
         # changer = CodeChanger()
         # changer.process_files(ai_data)
-
-        logger.warning('Модуль CodeChanger еще не реализован')
-        logger.info('Документация будет применена здесь')
+        pass
 
     def run(self) -> None:
         """Основной метод запуска приложения."""
@@ -143,7 +115,6 @@ class DocGen:
 
             # 2. Валидация путей
             if not self._validate_paths():
-                logger.error('Валидация путей не пройдена')
                 sys.exit(1)
 
             # 3. Запуск парсера
@@ -155,10 +126,7 @@ class DocGen:
             # 5. Применение изменений к коду
             self._apply_changes(ai_data)
 
-            logger.info('Генерация документации успешно завершена!')
-
-        except Exception as e:
-            logger.exception(f'Произошла ошибка: {e}')
+        except Exception:
             sys.exit(1)
 
 
