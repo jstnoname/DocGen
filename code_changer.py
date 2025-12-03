@@ -1,5 +1,6 @@
 from typing import TypedDict
 from parser import Position
+from ai_requester import PosWithDoc
 
 
 class Element(TypedDict):
@@ -23,12 +24,17 @@ class CodeChanger:
         # config - настройки программы (в будущем)
         self.config = config or {}
 
-    def process_files(self, ai_data: dict[str, tuple[Position, str]]) -> None:
+    def process_files(self, ai_data: dict[str, PosWithDoc]) -> None:
         """Основной метод для обработки всех файлов"""
-        files_data = self._group_by_files(ai_data)
+        converted_data = self._convert_ai_data(ai_data)
+        files_data = self._group_by_files(converted_data)
 
         for file_path, elements in files_data.items():
             self._process_single_file(file_path, elements)
+
+    def _convert_ai_data(self, ai_data: dict[str, PosWithDoc]) -> dict[str, tuple[Position, str]]:
+        """Конвертирует данные из AIRequester в формат, понятный CodeChanger"""
+        return {key: (value.Position, value.Documentation) for key, value in ai_data.items()}
 
     def _group_by_files(self, ai_data: dict[str, tuple[Position, str]]) -> dict[str, list[Element]]:
         """Группирует элементы по файлам"""
@@ -84,7 +90,7 @@ class CodeChanger:
             f.writelines(lines)
 
     def _find_end_of_definition(self, lines: list[str], start_line: int) -> int:
-        """Находит конец определения (упрощенная и надежная версия)"""
+        """Находит конец определения def():"""
         if start_line < 0:
             return 0
         if start_line >= len(lines):
@@ -160,7 +166,7 @@ class CodeChanger:
         return False
 
     def _insert_docstring(self, lines: list[str], position: Position, docstring: str) -> list[str]:
-        """Вставляет docstring (упрощенная версия)"""
+        """Вставляет docstring"""
         if position.start_line >= len(lines):
             return lines
 
