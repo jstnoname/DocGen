@@ -1,11 +1,10 @@
 ﻿import argparse
 import sys
-from parser import Parser, Position, PosWithBody
+from parser import Parser, PosWithBody
 from pathlib import Path
 
-# Импорты модулей (будут реализованы позже)
-# from ai_module import AIModule
-# from code_changer import CodeChanger
+from ai_requester import AIRequester, PosWithDoc
+from code_changer import CodeChanger
 
 
 class DocGen:
@@ -70,7 +69,7 @@ class DocGen:
         parsed_data = parser.parse_from_file(str(self._code_path))
         return parsed_data
 
-    def _generate_documentation(self, parsed_data: dict[str, PosWithBody]) -> dict[str, tuple[Position, str]]:
+    def _generate_documentation(self, parsed_data: dict[str, PosWithBody]) -> dict[str, PosWithDoc]:
         """
         Генерация документации с помощью AI.
 
@@ -88,9 +87,10 @@ class DocGen:
         # ai = AIModule(self.config_path)
         # documentation = ai.generate(parsed_data)
         # return documentation
-        return {}
+        docs = AIRequester(parsed_data).get_docs()
+        return docs
 
-    def _apply_changes(self, ai_data: dict[str, tuple[Position, str]]) -> None:
+    def _apply_changes(self, ai_data: dict[str, PosWithDoc]) -> None:
         """
         Применение изменений к коду (добавление документации).
 
@@ -105,6 +105,7 @@ class DocGen:
         # TODO: Реализовать когда будет готов модуль code_changer
         # changer = CodeChanger()
         # changer.process_files(ai_data)
+        CodeChanger().process_files(ai_data)
         pass
 
     def run(self) -> None:
