@@ -1,15 +1,5 @@
-from dataclasses import dataclass
 from typing import TypedDict
-
-
-@dataclass
-class Position:
-    """Position использует 0-based индексацию строк!
-    Position(0, 0, 0) соответствует первой строке файла"""
-
-    start_line: int
-    pos: int
-    end_line: int = 0
+from parser import Position
 
 
 class Element(TypedDict):
