@@ -17,8 +17,8 @@ class DocGen:
     def __init__(self) -> None:
         self.parser = argparse.ArgumentParser(description='DocGen - automatically generate documentation for your code')
         self._setup_arguments()
-        self.code_path: Path | None = None
-        self.config_path: Path | None = None
+        self._code_path: Path | None = None
+        self._config_path: Path | None = None
 
     def _setup_arguments(self) -> None:
         """Настройка аргументов командной строки."""
@@ -37,14 +37,14 @@ class DocGen:
     def _parse_arguments(self) -> None:
         """Парсинг аргументов командной строки и сохранение путей."""
         args = self.parser.parse_args()
-        self.code_path = args.path
-        self.config_path = args.config
+        self._code_path = args.path
+        self._config_path = args.config
 
     def _validate_paths(self) -> bool:
         """Валидация путей к файлам."""
-        if not self._check_path(self.code_path):
+        if not self._check_path(self._code_path):
             return False
-        if not self._check_path(self.config_path):
+        if not self._check_path(self._config_path):
             return False
         return True
 
@@ -67,7 +67,7 @@ class DocGen:
             dict: Словарь с распарсенными данными о коде
         """
         parser = Parser()
-        parsed_data = parser.parse_from_file(str(self.code_path))
+        parsed_data = parser.parse_from_file(str(self._code_path))
         return parsed_data
 
     def _generate_documentation(self, parsed_data: dict[str, PosWithBody]) -> dict[str, tuple[Position, str]]:
