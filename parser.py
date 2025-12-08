@@ -49,7 +49,7 @@ class Parser:
 
     def parse_from_file(self, filename: str) -> dict[str, PosWithBody]:
         """Основная функция - считывает файл"""
-        with open(filename, 'r') as f:
+        with open(filename, 'r', encoding='utf-8-sig') as f:
             self._path_to_current_file = os.path.realpath(filename)
             lines = f.readlines()
         return self._parse(lines)
@@ -96,7 +96,7 @@ class Parser:
         return False
 
     def _add(self, func_name: str, line_num: int, pos: int) -> None:
-        """Добавляет функции и классы в словарь и стак"""
+        """Добавляет функции и классы в словарь и стэк"""
         if pos == 0 and len(self._stack) != 0:
             self._stack.clear()
         if len(self._stack) == 0:
