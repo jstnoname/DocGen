@@ -154,7 +154,7 @@ class CodeChanger:
                 doc_end = i
                 break
 
-        return lines[:doc_start] + lines[doc_end + 1:]
+        return lines[:doc_start] + lines[doc_end + 1 :]
 
     @staticmethod
     def _read_file(file_path: str) -> list[str]:
@@ -255,7 +255,7 @@ class CodeChanger:
 
         formatted_docstring = self._format_docstring(docstring, indent_str)
 
-        return lines[: end_line + 1] + formatted_docstring + lines[end_line + 1:]
+        return lines[: end_line + 1] + formatted_docstring + lines[end_line + 1 :]
 
     @staticmethod
     def _format_docstring(docstring: str, indent: str) -> list[str]:
