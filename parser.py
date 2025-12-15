@@ -49,10 +49,25 @@ class Parser:
 
     def parse_from_file(self, filename: str) -> dict[str, PosWithBody]:
         """Основная функция - считывает файл"""
-        with open(filename, 'r') as f:
+        with open(filename, 'r', encoding='utf-8-sig') as f:
             self._path_to_current_file = os.path.realpath(filename)
             lines = f.readlines()
         return self._parse(lines)
+
+    def parse_generated_from_file(self, filename: str) -> dict[str, PosWithBody]:
+        """Ищет функции и классы, которые были сгенерированы"""
+        if len(self._dictionary) == 0:
+            self.parse_from_file(filename)
+        result = {}
+        for path, pos_with_body in self._dictionary.items():
+            for line in pos_with_body.body[1:]:
+                if "def" in line or "class" in line:
+                    break
+                if "\"\"\"" in line:
+                    if "\u200c" in line:
+                        result[path] = pos_with_body
+                    break
+        return result
 
     def _parse(self, lines: list[str]) -> dict[str, PosWithBody]:
         """Ищет функции и классы в списке строк"""
@@ -96,7 +111,7 @@ class Parser:
         return False
 
     def _add(self, func_name: str, line_num: int, pos: int) -> None:
-        """Добавляет функции и классы в словарь и стак"""
+        """Добавляет функции и классы в словарь и стэк"""
         if pos == 0 and len(self._stack) != 0:
             self._stack.clear()
         if len(self._stack) == 0:
