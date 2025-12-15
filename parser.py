@@ -54,6 +54,21 @@ class Parser:
             lines = f.readlines()
         return self._parse(lines)
 
+    def parse_generated_from_file(self, filename: str) -> dict[str, PosWithBody]:
+        """Ищет функции и классы, которые были сгенерированы"""
+        if len(self._dictionary) == 0:
+            self.parse_from_file(filename)
+        result = {}
+        for path, pos_with_body in self._dictionary.items():
+            for line in pos_with_body.body[1:]:
+                if "def" in line or "class" in line:
+                    break
+                if "\"\"\"" in line:
+                    if "\u200c" in line:
+                        result[path] = pos_with_body
+                    break
+        return result
+
     def _parse(self, lines: list[str]) -> dict[str, PosWithBody]:
         """Ищет функции и классы в списке строк"""
         decorator_counter = 0
