@@ -35,11 +35,13 @@ class CodeChanger:
         for file_path, elements in files_data.items():
             self._process_single_file(file_path, elements)
 
-    def _convert_ai_data(self, ai_data: dict[str, PosWithDoc]) -> dict[str, tuple[Position, str]]:
+    @staticmethod
+    def _convert_ai_data(ai_data: dict[str, PosWithDoc]) -> dict[str, tuple[Position, str]]:
         """Конвертирует данные из AIRequester в формат, понятный CodeChanger"""
         return {key: (value.Position, value.Documentation) for key, value in ai_data.items()}
 
-    def _group_by_files(self, ai_data: dict[str, tuple[Position, str]]) -> dict[str, list[Element]]:
+    @staticmethod
+    def _group_by_files(ai_data: dict[str, tuple[Position, str]]) -> dict[str, list[Element]]:
         """Группирует элементы по файлам"""
         files_data: dict[str, list[Element]] = {}
 
@@ -154,17 +156,20 @@ class CodeChanger:
 
         return lines[:doc_start] + lines[doc_end + 1 :]
 
-    def _read_file(self, file_path: str) -> list[str]:
+    @staticmethod
+    def _read_file(file_path: str) -> list[str]:
         """Читает файл в список строк"""
         with open(file_path, 'r', encoding='utf-8') as f:
             return f.readlines()
 
-    def _write_file(self, file_path: str, lines: list[str]) -> None:
+    @staticmethod
+    def _write_file(file_path: str, lines: list[str]) -> None:
         """Записывает файл"""
         with open(file_path, 'w', encoding='utf-8') as f:
             f.writelines(lines)
 
-    def _find_end_of_definition(self, lines: list[str], start_line: int) -> int:
+    @staticmethod
+    def _find_end_of_definition(lines: list[str], start_line: int) -> int:
         """Находит конец определения функции или класса (строку с двоеточием)"""
         if start_line < 0:
             return 0
@@ -252,7 +257,8 @@ class CodeChanger:
 
         return lines[: end_line + 1] + formatted_docstring + lines[end_line + 1 :]
 
-    def _format_docstring(self, docstring: str, indent: str) -> list[str]:
+    @staticmethod
+    def _format_docstring(docstring: str, indent: str) -> list[str]:
         """Форматирует docstring с правильными отступами"""
         if not docstring or not docstring.strip():
             return []
