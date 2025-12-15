@@ -1,13 +1,5 @@
-from parser import Position
-from typing import TypedDict
-
-from ai_requester import PosWithDoc
-
-
-class Element(TypedDict):
-    key: str
-    position: Position
-    docstring: str
+from docgen.ai_requester import PosWithDoc
+from docgen.records import Element, Position
 
 
 class CodeChanger:

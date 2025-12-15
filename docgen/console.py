@@ -1,11 +1,12 @@
 ﻿import argparse
 import os
 import sys
-from parser import Parser, PosWithBody
 from pathlib import Path
 
-from ai_requester import AIRequester, PosWithDoc
-from code_changer import CodeChanger
+from docgen.ai_requester import AIRequester
+from docgen.code_changer import CodeChanger
+from docgen.parser import Parser
+from docgen.records import PosWithBody, PosWithDoc
 
 
 class DocGen:
@@ -41,13 +42,13 @@ class DocGen:
 
     def _run_parser(self) -> dict[str, PosWithBody]:
         print(f'Parsing file: {self._code_path}')
-        result = Parser().parse_from_file(str(self._code_path))
+        result: dict[str, PosWithBody] = Parser().parse_from_file(str(self._code_path))
         print(f'Found {len(result)} items to document')
         return result
 
     def _generate_documentation(self, parsed_data: dict[str, PosWithBody]) -> dict[str, PosWithDoc]:
         print('Generating documentation with AI...')
-        result = AIRequester(parsed_data, apikey=self._api_key or "").get_docs()
+        result: dict[str, PosWithDoc] = AIRequester(parsed_data, apikey=self._api_key or "").get_docs()
         print(f'Generated documentation for {len(result)} items')
         return result
 
@@ -75,7 +76,3 @@ class DocGen:
 
 def main() -> None:
     DocGen().run()
-
-
-if __name__ == '__main__':
-    main()
