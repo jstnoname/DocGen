@@ -51,7 +51,8 @@ class DocGen:
         print(f'Generated documentation for {len(result)} items')
         return result
 
-    def _apply_changes(self, ai_data: dict[str, PosWithDoc]) -> None:
+    @staticmethod
+    def _apply_changes(ai_data: dict[str, PosWithDoc]) -> None:
         print('Applying changes to code...')
         CodeChanger().process_files(ai_data)
         print('Documentation successfully applied!')
