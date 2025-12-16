@@ -1,5 +1,4 @@
-from docgen.ai_requester import PosWithDoc
-from docgen.records import Element, Position
+from docgen.records import Element, Position, PosWithDoc
 
 
 class CodeChanger:
