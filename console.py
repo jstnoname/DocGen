@@ -47,8 +47,13 @@ class DocGen:
 
     def _run_parser(self) -> dict[str, PosWithBody]:
         print(f'Parsing file: {self._code_path}')
-        result = Parser().parse_from_file(str(self._code_path))
-        print(f'Found {len(result)} items to document')
+        parser = Parser()
+        if self._regen:
+            result = parser.parse_generated_from_file(str(self._code_path))
+            print(f'Found {len(result)} items with generated documentation to regenerate')
+        else:
+            result = parser.parse_from_file(str(self._code_path))
+            print(f'Found {len(result)} items to document')
         return result
 
     def _generate_documentation(self, parsed_data: dict[str, PosWithBody]) -> dict[str, PosWithDoc]:
@@ -57,10 +62,9 @@ class DocGen:
         print(f'Generated documentation for {len(result)} items')
         return result
 
-    @staticmethod
-    def _apply_changes(ai_data: dict[str, PosWithDoc]) -> None:
+    def _apply_changes(self, ai_data: dict[str, PosWithDoc]) -> None:
         print('Applying changes to code...')
-        CodeChanger().process_files(ai_data)
+        CodeChanger(regen=self._regen).process_files(ai_data)
         print('Documentation successfully applied!')
 
     def run(self) -> None:
