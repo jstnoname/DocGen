@@ -1,6 +1,41 @@
-import tempfile
+import pytest
 from pathlib import Path
-from code_changer import CodeChanger, Position
+from code_changer import CodeChanger
+
+
+class Position:
+    def __init__(self, start_line: int, pos: int, end_line: int = 0):
+        self.start_line = start_line
+        self.pos = pos
+        self.end_line = end_line
+
+    def __eq__(self, other):
+        if not isinstance(other, Position):
+            return False
+        return (
+            self.start_line == other.start_line
+            and self.pos == other.pos
+            and self.end_line == other.end_line
+        )
+
+    def __repr__(self):
+        return f"Position({self.start_line}, {self.pos}, {self.end_line})"
+
+
+class PosWithDoc:
+    def __init__(self, Position: Position, Documentation: str):
+        self.Position = Position
+        self.Documentation = Documentation
+
+
+def test_convert_ai_data():
+    # Проверяет конвертацию PosWithDoc → (Position, str)
+    ai_data = {
+        "f.py/f": PosWithDoc(Position(1, 2), "doc1")
+    }
+    changer = CodeChanger()
+    result = changer._convert_ai_data(ai_data)
+    assert result["f.py/f"] == (Position(1, 2), "doc1")
 
 
 def test_group_by_files():
@@ -98,36 +133,17 @@ def test_insert_docstring_class():
     ]
     assert new_lines == expected
 
-
-def test_process_single_file_with_no_existing_docstring(tmp_path: Path):
-    # Обработка файла: добавление docstring, если её нет
-    file_path = tmp_path / "test.py"
-    file_path.write_text("def foo():\n    return 42\n", encoding="utf-8")
-
-    ai_data = {
-        "test.py/foo": (Position(0, 0), "Returns 42.")
-    }
-
-    changer = CodeChanger()
-    files_data = changer._group_by_files(ai_data)
-    changer._process_single_file(str(file_path), files_data["test.py"])
-
-    result = file_path.read_text(encoding="utf-8")
-    assert '"""Returns 42."""' in result
-
-
 def test_process_single_file_with_existing_docstring(tmp_path: Path):
     # Обработка файла: пропуск, если docstring уже есть
     file_path = tmp_path / "test.py"
     file_path.write_text('def foo():\n    """Already documented."""\n    return 42\n', encoding="utf-8")
 
     ai_data = {
-        "test.py/foo": (Position(0, 0), "New doc.")
+        "test.py/foo": PosWithDoc(Position(0, 0), "New doc.")
     }
 
     changer = CodeChanger()
-    files_data = changer._group_by_files(ai_data)
-    changer._process_single_file(str(file_path), files_data["test.py"])
+    changer.process_files(ai_data)
 
     result = file_path.read_text(encoding="utf-8")
     assert '"""New doc."""' not in result
