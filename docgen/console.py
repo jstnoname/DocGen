@@ -18,11 +18,17 @@ class DocGen:
         self._code_path: Path | None = None
         self._config_path: Path | None = None
         self._api_key: str | None = None
+        self._regen: bool = False
+        self._full: bool = False
 
     def _setup_arguments(self) -> None:
         self.parser.add_argument('path', type=Path, help='Path to the code file')
         self.parser.add_argument('--config', type=Path, default='pyproject.toml', help='Path to config file')
         self.parser.add_argument('--api-key', type=str, help='Gemini API key')
+        self.parser.add_argument('-r', '--regen', action='store_true', help='Regenerate existing documentation')
+        self.parser.add_argument(
+            '-f', '--full', action='store_true', help='Generate documentation for all objects in file'
+        )
 
     def _parse_arguments(self) -> None:
         args = self.parser.parse_args()
@@ -42,19 +48,24 @@ class DocGen:
 
     def _run_parser(self) -> dict[str, PosWithBody]:
         print(f'Parsing file: {self._code_path}')
-        result: dict[str, PosWithBody] = Parser().parse_from_file(str(self._code_path))
-        print(f'Found {len(result)} items to document')
+        parser = Parser()
+        if self._regen:
+            result = parser.parse_generated_from_file(str(self._code_path))
+            print(f'Found {len(result)} items with generated documentation to regenerate')
+        else:
+            result = parser.parse_from_file(str(self._code_path))
+            print(f'Found {len(result)} items to document')
         return result
 
     def _generate_documentation(self, parsed_data: dict[str, PosWithBody]) -> dict[str, PosWithDoc]:
         print('Generating documentation with AI...')
-        result: dict[str, PosWithDoc] = AIRequester(parsed_data, apikey=self._api_key or "").get_docs()
+        result = AIRequester(parsed_data, apikey=self._api_key or "").get_docs()
         print(f'Generated documentation for {len(result)} items')
         return result
 
     def _apply_changes(self, ai_data: dict[str, PosWithDoc]) -> None:
         print('Applying changes to code...')
-        CodeChanger().process_files(ai_data)
+        CodeChanger(regen=self._regen).process_files(ai_data)
         print('Documentation successfully applied!')
 
     def run(self) -> None:
