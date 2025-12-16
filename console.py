@@ -24,8 +24,10 @@ class DocGen:
         self.parser.add_argument('path', type=Path, help='Path to the code file')
         self.parser.add_argument('--config', type=Path, default='pyproject.toml', help='Path to config file')
         self.parser.add_argument('--api-key', type=str, help='Gemini API key')
-        self.parser.add_argument('--regen', action='store_true', help='Regenerate existing documentation')
-        self.parser.add_argument('--full', action='store_true', help='Generate documentation for all objects in file')
+        self.parser.add_argument('-r', '--regen', action='store_true', help='Regenerate existing documentation')
+        self.parser.add_argument(
+            '-f', '--full', action='store_true', help='Generate documentation for all objects in file'
+        )
 
     def _parse_arguments(self) -> None:
         args = self.parser.parse_args()
