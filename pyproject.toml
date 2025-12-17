@@ -1,20 +1,32 @@
 [project]
-name = "DocGen"
-version = "0.0.1"
+name = "docgen"
+version = "1.0.0"
 description = "DocGen. Easy generate documentation to your code"
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
 
-[tool.poetry]
-authors = ["Alex Spirin"]
+authors = [
+  { name = "Alex Spirin" },
+  { name = "Alexandra Izmailova" },
+  { name = "Timofey Erjov" },
+  { name = "Ivan Malgin" },
+  { name = "Nikita Raskovalov" },
+]
 
 [tool.poetry.dependencies]
 python = ">=3.12, <4.0"
+requests = ">=2.32.5"
+
+[tool.poetry.group.dev.dependencies]
 mypy = "^1.15.0"
 flake8 = "^7.2.0"
 flake8-pyproject = "^1.2.3"
 pre-commit = "^4.2.0"
 black = "^25.1.0"
 isort = "^6.0.1"
-requests = "^2.32.5"
+
+[project.scripts]
+docgen = "docgen.console:main"
 
 [tool.black]
 line-length = 120
@@ -25,13 +37,11 @@ skip-string-normalization = true
 profile = "hug"
 src_paths = ["isort", "test"]
 
-
 [tool.flake8]
 max-line-length = 120
 ignore = ["E203", "W503"]
 exclude = [".git", "__pycache__", ".venv"]
 show-source = true
-
 
 [tool.mypy]
 python_version = 3.12

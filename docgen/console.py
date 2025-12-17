@@ -1,11 +1,12 @@
 ﻿import argparse
 import os
 import sys
-from parser import Parser, PosWithBody
 from pathlib import Path
 
-from ai_requester import AIRequester, PosWithDoc
-from code_changer import CodeChanger
+from docgen.ai_requester import AIRequester
+from docgen.code_changer import CodeChanger
+from docgen.parser import Parser
+from docgen.records import PosWithBody, PosWithDoc
 
 
 class DocGen:
@@ -34,8 +35,6 @@ class DocGen:
         self._code_path = args.path
         self._config_path = args.config
         self._api_key = args.api_key or os.getenv('GEMINI_API_KEY')
-        self._regen = args.regen
-        self._full = args.full
 
     def _validate_paths(self) -> bool:
         return self._check_path(self._code_path) and self._check_path(self._config_path)
@@ -88,7 +87,3 @@ class DocGen:
 
 def main() -> None:
     DocGen().run()
-
-
-if __name__ == '__main__':
-    main()
