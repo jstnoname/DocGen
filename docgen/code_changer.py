@@ -11,7 +11,7 @@ class CodeChanger:
         "name_of_file/ClassName/method_name": (Position(start_line, pos, end_line), "doc")
     }
     """
-    GENERATION_MARKER = "\u200c"
+    GENERATION_MARKER = "Generated documentation"
 
     def __init__(self, config: dict[str, str] | None = None, regen: bool = False):
         # config - настройки программы (в будущем)

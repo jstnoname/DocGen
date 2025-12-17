@@ -1,6 +1,7 @@
 import os.path
 import re
 
+from docgen.code_changer import CodeChanger
 from docgen.records import ClassOrFunc, Position, PosWithBody
 
 
@@ -38,7 +39,7 @@ class Parser:
                 if "def" in line or "class" in line:
                     break
                 if "\"\"\"" in line:
-                    if "\u200c" in line:
+                    if CodeChanger.GENERATION_MARKER in line:
                         result[path] = pos_with_body
                     break
         return result
