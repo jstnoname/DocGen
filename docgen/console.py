@@ -35,9 +35,15 @@ class DocGen:
         self._code_path = args.path
         self._config_path = args.config
         self._api_key = args.api_key or os.getenv('GEMINI_API_KEY')
+        self._regen = args.regen
+        self._full = args.full
 
     def _validate_paths(self) -> bool:
-        return self._check_path(self._code_path) and self._check_path(self._config_path)
+        if not self._check_path(self._code_path):
+            return False
+        if self._config_path and self._config_path != Path('pyproject.toml'):
+            return self._check_path(self._config_path)
+        return True
 
     def _validate_api_key(self) -> bool:
         return self._api_key is not None and len(self._api_key) > 0
