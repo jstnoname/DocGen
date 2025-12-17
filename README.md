@@ -1,4 +1,4 @@
-# DocGen: DOCumantation GENerator
+# DocGen: DOCumentation GENerator
 
 ## About
 Have you ever tired on writing documentation to your code? <br>
