@@ -2,9 +2,16 @@
 name = "docgen"
 version = "1.0.0"
 description = "DocGen. Easy generate documentation to your code"
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
 
-[tool.poetry]
-authors = ["Alex Spirin", "Alexandra Izmailova", "Timofey Erjov", "Ivan Malgin", "Nikita Raskovalov"]
+authors = [
+  { name = "Alex Spirin" },
+  { name = "Alexandra Izmailova" },
+  { name = "Timofey Erjov" },
+  { name = "Ivan Malgin" },
+  { name = "Nikita Raskovalov" },
+]
 
 [tool.poetry.dependencies]
 python = ">=3.12, <4.0"
