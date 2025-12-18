@@ -11,7 +11,8 @@ authors = [
   { name = "Timofey Erjov" },
   { name = "Ivan Malgin" },
   { name = "Nikita Raskovalov" },
-  ]
+]
+
 [tool.poetry.dependencies]
 python = ">=3.12, <4.0"
 requests = ">=2.32.5"
