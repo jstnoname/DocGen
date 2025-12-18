@@ -62,7 +62,7 @@ class CodeChanger:
                 if self.regen:
                     # Заменяем только сгенерированную документацию и вставляем где ее нет
                     if self._has_existing_docstring(lines, position):
-                        if self._is_generated_docstring(lines, position):
+                        if self.is_generated_docstring(lines, position):
                             lines = self._replace_docstring(lines, position, docstring)
                             modified = True
                     else:
@@ -84,13 +84,14 @@ class CodeChanger:
         except Exception as e:
             print(f"Ошибка при обработке {file_path}: {e}")
 
-    def _is_generated_docstring(self, lines: list[str], position: Position) -> bool:
+    @staticmethod
+    def is_generated_docstring(lines: list[str], position: Position) -> bool:
         """
         Проверяет, является ли существующий docstring сгенерированным
         (содержит GENERATION_MARKER)
         """
         start_line = position.start_line
-        end_line = self._find_end_of_definition(lines, start_line)
+        end_line = CodeChanger._find_end_of_definition(lines, start_line)
 
         for i in range(end_line + 1, min(end_line + 10, len(lines))):
             line = lines[i].strip()
@@ -109,7 +110,7 @@ class CodeChanger:
                     current_line += 1
 
                 for doc_line in doc_lines:
-                    if self.GENERATION_MARKER in doc_line:
+                    if CodeChanger.GENERATION_MARKER in doc_line:
                         return True
 
                 return False
@@ -119,25 +120,27 @@ class CodeChanger:
 
     def _replace_docstring(self, lines: list[str], position: Position, new_doc: str) -> list[str]:
         """Заменяет существующий docstring на новый"""
-        return self._insert_docstring(self._remove_docstring(lines, position), position, new_doc)
+        return self._insert_docstring(self.remove_docstring(lines, position), position, new_doc)
 
-    def _remove_docstring(self, lines: list[str], position: Position) -> list[str]:
+    @staticmethod
+    def remove_docstring(lines: list[str], position: Position, return_all_file: bool = True) -> list[str]:
         """
         Удаляет существующий docstring на указанной позиции
         Возвращает новый список строк без docstring
         """
         start_line = position.start_line
-        end_line = self._find_end_of_definition(lines, start_line)
+        end_line = position.end_line
+        definition_end_line = CodeChanger._find_end_of_definition(lines, start_line)
 
         doc_start = -1
-        for i in range(end_line + 1, min(end_line + 10, len(lines))):
+        for i in range(definition_end_line + 1, min(definition_end_line + 10, len(lines))):
             line = lines[i].strip()
             if line.startswith(('"""', "'''")):
                 doc_start = i
                 break
 
         if doc_start == -1:
-            return lines
+            return lines if return_all_file else lines[start_line:end_line]
 
         doc_end = doc_start
         for i in range(doc_start, min(doc_start + 20, len(lines))):
@@ -146,7 +149,10 @@ class CodeChanger:
                 break
 
         doc_end_pos = doc_end + 1
-        return lines[:doc_start] + lines[doc_end_pos:]
+        if return_all_file:
+            return lines[:doc_start] + lines[doc_end_pos:]
+        body_start = doc_end + 1
+        return lines[start_line:doc_start] + lines[body_start:end_line]
 
     @staticmethod
     def _read_file(file_path: str) -> list[str]:
