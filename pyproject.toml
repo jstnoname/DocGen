@@ -10,11 +10,10 @@ authors = [
   { name = "Alexandra Izmailova" },
   { name = "Timofey Erjov" },
   { name = "Ivan Malgin" },
-  { name = "Nikita Raskovalov" },
+  { name = "Nikita Raskovalov" }
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.12, <4.0"
 requests = ">=2.32.5"
 
 [tool.poetry.group.dev.dependencies]

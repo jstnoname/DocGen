@@ -24,7 +24,7 @@ class DocGen:
     def _setup_arguments(self) -> None:
         self.parser.add_argument('path', type=Path, help='Path to the code file')
         self.parser.add_argument('--config', type=Path, default='pyproject.toml', help='Path to config file')
-        self.parser.add_argument('--api-key', type=str, help='Gemini API key')
+        self.parser.add_argument('--api-key', '-a', type=str, help='Gemini API key')
         self.parser.add_argument('-r', '--regen', action='store_true', help='Regenerate existing documentation')
         self.parser.add_argument(
             '-f', '--full', action='store_true', help='Generate documentation for all objects in file'
@@ -35,9 +35,15 @@ class DocGen:
         self._code_path = args.path
         self._config_path = args.config
         self._api_key = args.api_key or os.getenv('GEMINI_API_KEY')
+        self._regen = args.regen
+        self._full = args.full
 
     def _validate_paths(self) -> bool:
-        return self._check_path(self._code_path) and self._check_path(self._config_path)
+        if not self._check_path(self._code_path):
+            return False
+        if self._config_path and self._config_path != Path('pyproject.toml'):
+            return self._check_path(self._config_path)
+        return True
 
     def _validate_api_key(self) -> bool:
         return self._api_key is not None and len(self._api_key) > 0
@@ -78,6 +84,9 @@ class DocGen:
                 print('Error: Gemini API key is required. Use --api-key or set GEMINI_API_KEY environment variable.')
                 sys.exit(1)
             parsed_data = self._run_parser()
+            if len(parsed_data) == 0:
+                print('No objects to doc found')
+                sys.exit(0)
             ai_data = self._generate_documentation(parsed_data)
             self._apply_changes(ai_data)
         except Exception as e:
