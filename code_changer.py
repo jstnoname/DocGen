@@ -20,7 +20,7 @@ class CodeChanger:
         "name_of_file/ClassName/method_name": (Position(start_line, pos, end_line), "doc")
     }
     """
-    GENERATION_MARKER = "\u200c"
+    GENERATION_MARKER = "Generated doc"
 
     def __init__(self, config: dict[str, str] | None = None, regen: bool = False):
         # config - настройки программы (в будущем)
@@ -257,6 +257,7 @@ class CodeChanger:
         formatted_docstring = self._format_docstring(docstring, indent_str)
 
         end_line_pos = end_line + 1
+
         return lines[:end_line_pos] + formatted_docstring + lines[end_line_pos:]
 
     @staticmethod
@@ -272,10 +273,13 @@ class CodeChanger:
 
         # однострочный docstring
         if len(docstring_lines) == 1:
-            formatted_lines.append(f'{indent}{extra_indent}"""{docstring_lines[0]}"""\n')
+            marked_doc = f"{CodeChanger.GENERATION_MARKER}\n{docstring_lines[0]}"
+            formatted_lines.append(f'{indent}{extra_indent}"""{marked_doc}"""\n')
         else:
             # многострочный docstring
             formatted_lines.append(f'{indent}{extra_indent}"""\n')
+            formatted_lines.append(f'{indent}{extra_indent}{CodeChanger.GENERATION_MARKER}\n')
+            formatted_lines.append(f'{indent}{extra_indent}\n')
             for line in docstring_lines:
                 formatted_lines.append(f'{indent}{extra_indent}{line}\n')
             formatted_lines.append(f'{indent}{extra_indent}"""\n')
