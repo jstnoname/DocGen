@@ -38,8 +38,15 @@ src_paths = ["isort", "test"]
 
 [tool.flake8]
 max-line-length = 120
-ignore = ["E203", "W503"]
-exclude = [".git", "__pycache__", ".venv"]
+ignore = [
+  "E203",
+  "W503"
+]
+exclude = [
+  ".git",
+  "__pycache__",
+  ".venv"
+]
 show-source = true
 
 [tool.mypy]
