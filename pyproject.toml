@@ -1,6 +1,6 @@
 [project]
 name = "fiit_docgen"
-version = "1.0.0"
+version = "1.0.1"
 description = "DocGen. Easy generate documentation to your code"
 readme = "README.md"
 requires-python = ">=3.12,<4.0"
