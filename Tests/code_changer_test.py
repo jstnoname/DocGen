@@ -75,9 +75,8 @@ def test_has_existing_docstring_with_docstring():
     changer = CodeChanger()
     assert changer._has_existing_docstring(lines, position)
 
-
 def test_insert_docstring_function():
-    # Вставка однострочной docstring в функцию
+    # Вставка однострочной docstring в функцию (с GENERATION_MARKER)
     lines = [
         "def foo():\n",
         "    pass\n"
@@ -88,14 +87,18 @@ def test_insert_docstring_function():
     new_lines = changer._insert_docstring(lines, position, docstring)
     expected = [
         "def foo():\n",
-        "    \"\"\"This is a test function.\"\"\"\n",
+        '    """\n',
+        '    Generated documentation\n',
+        '    \n',
+        '    This is a test function.\n',
+        '    """\n',
         "    pass\n"
     ]
     assert new_lines == expected
 
 
 def test_insert_docstring_multiline():
-    # Вставка многострочной docstring
+    # Вставка многострочной docstring (с GENERATION_MARKER)
     lines = [
         "def foo():\n",
         "    x = 1\n"
@@ -107,6 +110,8 @@ def test_insert_docstring_multiline():
     expected = [
         "def foo():\n",
         '    """\n',
+        '    Generated documentation\n',
+        '    \n',
         '    Line 1\n',
         '    Line 2\n',
         '    """\n',
@@ -116,7 +121,7 @@ def test_insert_docstring_multiline():
 
 
 def test_insert_docstring_class():
-    # Вставка docstring в класс
+    # Вставка docstring в класс (с GENERATION_MARKER)
     lines = [
         "class MyClass:\n",
         "    pass\n"
@@ -127,7 +132,11 @@ def test_insert_docstring_class():
     new_lines = changer._insert_docstring(lines, position, docstring)
     expected = [
         "class MyClass:\n",
-        "    \"\"\"A test class.\"\"\"\n",
+        '    """\n',
+        '    Generated documentation\n',
+        '    \n',
+        '    A test class.\n',
+        '    """\n',
         "    pass\n"
     ]
     assert new_lines == expected
