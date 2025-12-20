@@ -1,13 +1,4 @@
-from parser import Position
-from typing import TypedDict
-
-from ai_requester import PosWithDoc
-
-
-class Element(TypedDict):
-    key: str
-    position: Position
-    docstring: str
+from docgen.records import Element, Position, PosWithDoc
 
 
 class CodeChanger:
@@ -20,7 +11,7 @@ class CodeChanger:
         "name_of_file/ClassName/method_name": (Position(start_line, pos, end_line), "doc")
     }
     """
-    GENERATION_MARKER = "Generated doc"
+    GENERATION_MARKER = "Generated documentation"
 
     def __init__(self, config: dict[str, str] | None = None, regen: bool = False):
         # config - настройки программы (в будущем)
@@ -270,18 +261,11 @@ class CodeChanger:
         formatted_lines = []
 
         extra_indent = '    '
-
-        # однострочный docstring
-        if len(docstring_lines) == 1:
-            marked_doc = f"{CodeChanger.GENERATION_MARKER}\n{docstring_lines[0]}"
-            formatted_lines.append(f'{indent}{extra_indent}"""{marked_doc}"""\n')
-        else:
-            # многострочный docstring
-            formatted_lines.append(f'{indent}{extra_indent}"""\n')
-            formatted_lines.append(f'{indent}{extra_indent}{CodeChanger.GENERATION_MARKER}\n')
-            formatted_lines.append(f'{indent}{extra_indent}\n')
-            for line in docstring_lines:
-                formatted_lines.append(f'{indent}{extra_indent}{line}\n')
-            formatted_lines.append(f'{indent}{extra_indent}"""\n')
+        formatted_lines.append(f'{indent}{extra_indent}"""\n')
+        formatted_lines.append(f'{indent}{extra_indent}{CodeChanger.GENERATION_MARKER}\n')
+        formatted_lines.append(f'{indent}{extra_indent}\n')
+        for line in docstring_lines:
+            formatted_lines.append(f'{indent}{extra_indent}{line}\n')
+        formatted_lines.append(f'{indent}{extra_indent}"""\n')
 
         return formatted_lines

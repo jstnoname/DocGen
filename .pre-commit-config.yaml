@@ -8,8 +8,9 @@
     rev: v1.17.0
     hooks:
       - id: mypy
-        args: [--config-file=pyproject.toml]
         language: system
+        args:
+        - "--config-file=pyproject.toml"
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -29,4 +30,5 @@
     rev: 7.3.0
     hooks:
       - id: flake8
-        args: [--max-line-length=120, --config=pyproject.toml]
+        args:
+        - "--max-line-length=120"
