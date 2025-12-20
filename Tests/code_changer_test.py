@@ -1,43 +1,18 @@
 from pathlib import Path
+
 from docgen.code_changer import CodeChanger
+from docgen.records import Position, PosWithDoc
 
 
-class Position:
-    def __init__(self, start_line: int, pos: int, end_line: int = 0):
-        self.start_line = start_line
-        self.pos = pos
-        self.end_line = end_line
-
-    def __eq__(self, other):
-        if not isinstance(other, Position):
-            return False
-        return (
-            self.start_line == other.start_line
-            and self.pos == other.pos
-            and self.end_line == other.end_line
-        )
-
-    def __repr__(self):
-        return f"Position({self.start_line}, {self.pos}, {self.end_line})"
-
-
-class PosWithDoc:
-    def __init__(self, Position: Position, Documentation: str):
-        self.Position = Position
-        self.Documentation = Documentation
-
-
-def test_convert_ai_data():
+def test_convert_ai_data() -> None:
     # Проверяет конвертацию PosWithDoc → (Position, str)
-    ai_data = {
-        "f.py/f": PosWithDoc(Position(1, 2), "doc1")
-    }
+    ai_data = {"f.py/f": PosWithDoc(Position(1, 2), "doc1")}
     changer = CodeChanger()
     result = changer._convert_ai_data(ai_data)
     assert result["f.py/f"] == (Position(1, 2), "doc1")
 
 
-def test_group_by_files():
+def test_group_by_files() -> None:
     # Проверяет группировку элементов по файлам
     ai_data = {
         "file1.py/func1": (Position(5, 0), "Docs for func1"),
@@ -53,34 +28,25 @@ def test_group_by_files():
     assert len(grouped["file2.py"]) == 1
 
 
-def test_has_existing_docstring_no_docstring():
+def test_has_existing_docstring_no_docstring() -> None:
     # Проверяет отсутствие docstring
-    lines = [
-        "def foo():\n",
-        "    pass\n"
-    ]
+    lines = ["def foo():\n", "    pass\n"]
     position = Position(0, 0)
     changer = CodeChanger()
     assert not changer._has_existing_docstring(lines, position)
 
 
-def test_has_existing_docstring_with_docstring():
+def test_has_existing_docstring_with_docstring() -> None:
     # Проверяет наличие docstring
-    lines = [
-        "def foo():\n",
-        '    """This is a docstring."""\n',
-        "    pass\n"
-    ]
+    lines = ["def foo():\n", '    """This is a docstring."""\n', "    pass\n"]
     position = Position(0, 0)
     changer = CodeChanger()
     assert changer._has_existing_docstring(lines, position)
 
-def test_insert_docstring_function():
+
+def test_insert_docstring_function() -> None:
     # Вставка однострочной docstring в функцию (с GENERATION_MARKER)
-    lines = [
-        "def foo():\n",
-        "    pass\n"
-    ]
+    lines = ["def foo():\n", "    pass\n"]
     position = Position(0, 0)
     docstring = "This is a test function."
     changer = CodeChanger()
@@ -92,17 +58,14 @@ def test_insert_docstring_function():
         '    \n',
         '    This is a test function.\n',
         '    """\n',
-        "    pass\n"
+        "    pass\n",
     ]
     assert new_lines == expected
 
 
-def test_insert_docstring_multiline():
+def test_insert_docstring_multiline() -> None:
     # Вставка многострочной docstring (с GENERATION_MARKER)
-    lines = [
-        "def foo():\n",
-        "    x = 1\n"
-    ]
+    lines = ["def foo():\n", "    x = 1\n"]
     position = Position(0, 0)
     docstring = "Line 1\nLine 2"
     changer = CodeChanger()
@@ -115,17 +78,14 @@ def test_insert_docstring_multiline():
         '    Line 1\n',
         '    Line 2\n',
         '    """\n',
-        "    x = 1\n"
+        "    x = 1\n",
     ]
     assert new_lines == expected
 
 
-def test_insert_docstring_class():
+def test_insert_docstring_class() -> None:
     # Вставка docstring в класс (с GENERATION_MARKER)
-    lines = [
-        "class MyClass:\n",
-        "    pass\n"
-    ]
+    lines = ["class MyClass:\n", "    pass\n"]
     position = Position(0, 0)
     docstring = "A test class."
     changer = CodeChanger()
@@ -137,18 +97,17 @@ def test_insert_docstring_class():
         '    \n',
         '    A test class.\n',
         '    """\n',
-        "    pass\n"
+        "    pass\n",
     ]
     assert new_lines == expected
 
-def test_process_single_file_with_existing_docstring(tmp_path: Path):
+
+def test_process_single_file_with_existing_docstring(tmp_path: Path) -> None:
     # Обработка файла: пропуск, если docstring уже есть
     file_path = tmp_path / "test.py"
     file_path.write_text('def foo():\n    """Already documented."""\n    return 42\n', encoding="utf-8")
 
-    ai_data = {
-        "test.py/foo": PosWithDoc(Position(0, 0), "New doc.")
-    }
+    ai_data = {"test.py/foo": PosWithDoc(Position(0, 0, 0), "New doc.")}
 
     changer = CodeChanger()
     changer.process_files(ai_data)
@@ -158,7 +117,7 @@ def test_process_single_file_with_existing_docstring(tmp_path: Path):
     assert '"""Already documented."""' in result
 
 
-def test_find_end_of_definition_function_simple():
+def test_find_end_of_definition_function_simple() -> None:
     # Поиск конца простой функции
     lines = ["def foo():\n", "    pass\n"]
     changer = CodeChanger()
@@ -166,21 +125,15 @@ def test_find_end_of_definition_function_simple():
     assert end == 0
 
 
-def test_find_end_of_definition_function_multiline_signature():
+def test_find_end_of_definition_function_multiline_signature() -> None:
     # Поиск конца функции с многострочной сигнатурой
-    lines = [
-        "def foo(\n",
-        "    a: int,\n",
-        "    b: str\n",
-        "):\n",
-        "    pass\n"
-    ]
+    lines = ["def foo(\n", "    a: int,\n", "    b: str\n", "):\n", "    pass\n"]
     changer = CodeChanger()
     end = changer._find_end_of_definition(lines, 0)
     assert end == 3
 
 
-def test_find_end_of_definition_class():
+def test_find_end_of_definition_class() -> None:
     # Поиск конца определения класса
     lines = ["class A:\n", "    def method(self): pass\n"]
     changer = CodeChanger()
