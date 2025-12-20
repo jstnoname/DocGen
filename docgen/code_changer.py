@@ -254,6 +254,7 @@ class CodeChanger:
         formatted_docstring = self._format_docstring(docstring, indent_str)
 
         end_line_pos = end_line + 1
+
         return lines[:end_line_pos] + formatted_docstring + lines[end_line_pos:]
 
     @staticmethod
@@ -266,15 +267,11 @@ class CodeChanger:
         formatted_lines = []
 
         extra_indent = '    '
-
-        # однострочный docstring
-        if len(docstring_lines) == 1:
-            formatted_lines.append(f'{indent}{extra_indent}"""{docstring_lines[0]}"""\n')
-        else:
-            # многострочный docstring
-            formatted_lines.append(f'{indent}{extra_indent}"""\n')
-            for line in docstring_lines:
-                formatted_lines.append(f'{indent}{extra_indent}{line}\n')
-            formatted_lines.append(f'{indent}{extra_indent}"""\n')
+        formatted_lines.append(f'{indent}{extra_indent}"""\n')
+        formatted_lines.append(f'{indent}{extra_indent}{CodeChanger.GENERATION_MARKER}\n')
+        formatted_lines.append(f'{indent}{extra_indent}\n')
+        for line in docstring_lines:
+            formatted_lines.append(f'{indent}{extra_indent}{line}\n')
+        formatted_lines.append(f'{indent}{extra_indent}"""\n')
 
         return formatted_lines
