@@ -1,9 +1,11 @@
 import os
 import tempfile
-from parser import Parser, Position, PosWithBody
+
+from docgen.parser import Parser
+from docgen.records import Position, PosWithBody
 
 
-def test_simple_function():
+def test_simple_function() -> None:
     # Простая функция: проверка start_line, end_line и body
     code = """def foo():
     pass
@@ -23,7 +25,7 @@ def test_simple_function():
     assert result[key].body == ["def foo():\n", "    pass\n"]
 
 
-def test_simple_class():
+def test_simple_class() -> None:
     # Простой класс с методом
     code = """class MyClass:
     def method(self):
@@ -49,7 +51,7 @@ def test_simple_class():
     assert result[method_key].body == ["    def method(self):\n", "        pass\n"]
 
 
-def test_nested_functions():
+def test_nested_functions() -> None:
     # Вложенные функции
     code = """def outer():
     def inner():
@@ -81,7 +83,7 @@ def test_nested_functions():
     ]
 
 
-def test_empty_file():
+def test_empty_file() -> None:
     # Пустой файл → пустой результат
     code = ""
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
@@ -93,7 +95,7 @@ def test_empty_file():
     assert result == {}
 
 
-def test_class_and_function_same_name():
+def test_class_and_function_same_name() -> None:
     # Имя класса и функции совпадают — функция перезаписывает (последняя)
     code = """class A:
     def method(self):
@@ -115,7 +117,7 @@ def A():
     assert result[a_key].body == ["def A():\n", "    return 1\n"]
 
 
-def test_empty_function_body():
+def test_empty_function_body() -> None:
     # Функция с пустым телом (только pass)
     code = """def empty():
     pass
@@ -132,7 +134,7 @@ def test_empty_function_body():
     assert result[key].body == ["def empty():\n", "    pass\n"]
 
 
-def test_class_with_empty_body():
+def test_class_with_empty_body() -> None:
     # Пустой класс
     code = """class Empty:
     pass
@@ -149,7 +151,7 @@ def test_class_with_empty_body():
     assert result[key].body == ["class Empty:\n", "    pass\n"]
 
 
-def test_nested_class_in_function():
+def test_nested_class_in_function() -> None:
     # Вложенный класс (редко, но возможно)
     code = """def container():
     class Inner:
@@ -172,7 +174,7 @@ def test_nested_class_in_function():
     assert result[method_key].position.start_line == 2
 
 
-def test_correct_end_line_after_multiline_function():
+def test_correct_end_line_after_multiline_function() -> None:
     # Функция с многострочной сигнатурой
     code = """def long_func(
     a: int,
@@ -194,13 +196,13 @@ def test_correct_end_line_after_multiline_function():
     assert "return a + len(b)" in ''.join(result[key].body)
 
 
-def test_position_repr():
+def test_position_repr() -> None:
     # Проверка корректности __repr__ у Position
     pos = Position(start_line=5, pos=4, end_line=10)
     assert repr(pos) == "(lines:5-10, offset:4)"
 
 
-def test_pos_with_body_default_factory():
+def test_pos_with_body_default_factory() -> None:
     # Проверка, что body по умолчанию — пустой список (а не общий для всех)
     item1 = PosWithBody(Position(0, 0))
     item2 = PosWithBody(Position(1, 0))
