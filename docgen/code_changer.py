@@ -1,12 +1,4 @@
-from typing import TypedDict
-from parser import Position
-from ai_requester import PosWithDoc
-
-
-class Element(TypedDict):
-    key: str
-    position: Position
-    docstring: str
+from docgen.records import Element, Position, PosWithDoc
 
 
 class CodeChanger:
@@ -19,10 +11,12 @@ class CodeChanger:
         "name_of_file/ClassName/method_name": (Position(start_line, pos, end_line), "doc")
     }
     """
+    GENERATION_MARKER = "Generated documentation"
 
-    def __init__(self, config: dict[str, str] | None = None):
+    def __init__(self, config: dict[str, str] | None = None, regen: bool = False):
         # config - настройки программы (в будущем)
         self.config = config or {}
+        self.regen = regen
 
     def process_files(self, ai_data: dict[str, PosWithDoc]) -> None:
         """Основной метод для обработки всех файлов"""
@@ -32,11 +26,13 @@ class CodeChanger:
         for file_path, elements in files_data.items():
             self._process_single_file(file_path, elements)
 
-    def _convert_ai_data(self, ai_data: dict[str, PosWithDoc]) -> dict[str, tuple[Position, str]]:
+    @staticmethod
+    def _convert_ai_data(ai_data: dict[str, PosWithDoc]) -> dict[str, tuple[Position, str]]:
         """Конвертирует данные из AIRequester в формат, понятный CodeChanger"""
         return {key: (value.Position, value.Documentation) for key, value in ai_data.items()}
 
-    def _group_by_files(self, ai_data: dict[str, tuple[Position, str]]) -> dict[str, list[Element]]:
+    @staticmethod
+    def _group_by_files(ai_data: dict[str, tuple[Position, str]]) -> dict[str, list[Element]]:
         """Группирует элементы по файлам"""
         files_data: dict[str, list[Element]] = {}
 
@@ -63,10 +59,19 @@ class CodeChanger:
                 position: Position = element['position']
                 docstring: str = element['docstring']
 
-                # проверяем, нет ли уже docstring
-                if not self._has_existing_docstring(lines, position):
-                    lines = self._insert_docstring(lines, position, docstring)
-                    modified = True
+                if self.regen:
+                    # Заменяем только сгенерированную документацию и вставляем где ее нет
+                    if self._has_existing_docstring(lines, position):
+                        if self.is_generated_docstring(lines, position):
+                            lines = self._replace_docstring(lines, position, docstring)
+                            modified = True
+                    else:
+                        lines = self._insert_docstring(lines, position, docstring)
+                        modified = True
+                else:
+                    if not self._has_existing_docstring(lines, position):
+                        lines = self._insert_docstring(lines, position, docstring)
+                        modified = True
 
             if modified:
                 self._write_file(file_path, lines)
@@ -79,18 +84,91 @@ class CodeChanger:
         except Exception as e:
             print(f"Ошибка при обработке {file_path}: {e}")
 
-    def _read_file(self, file_path: str) -> list[str]:
+    @staticmethod
+    def is_generated_docstring(lines: list[str], position: Position) -> bool:
+        """
+        Проверяет, является ли существующий docstring сгенерированным
+        (содержит GENERATION_MARKER)
+        """
+        start_line = position.start_line
+        end_line = CodeChanger._find_end_of_definition(lines, start_line)
+
+        for i in range(end_line + 1, min(end_line + 10, len(lines))):
+            line = lines[i].strip()
+
+            if not line or line.startswith('#'):
+                continue
+
+            if line.startswith(('"""', "'''")):
+                doc_lines = []
+                current_line = i
+
+                while current_line < len(lines):
+                    doc_lines.append(lines[current_line])
+                    if lines[current_line].rstrip().endswith(('"""', "'''")):
+                        break
+                    current_line += 1
+
+                for doc_line in doc_lines:
+                    if CodeChanger.GENERATION_MARKER in doc_line:
+                        return True
+
+                return False
+            break
+
+        return False
+
+    def _replace_docstring(self, lines: list[str], position: Position, new_doc: str) -> list[str]:
+        """Заменяет существующий docstring на новый"""
+        return self._insert_docstring(self.remove_docstring(lines, position), position, new_doc)
+
+    @staticmethod
+    def remove_docstring(lines: list[str], position: Position, return_all_file: bool = True) -> list[str]:
+        """
+        Удаляет существующий docstring на указанной позиции
+        Возвращает новый список строк без docstring
+        """
+        start_line = position.start_line
+        end_line = position.end_line
+        definition_end_line = CodeChanger._find_end_of_definition(lines, start_line)
+
+        doc_start = -1
+        for i in range(definition_end_line + 1, min(definition_end_line + 10, len(lines))):
+            line = lines[i].strip()
+            if line.startswith(('"""', "'''")):
+                doc_start = i
+                break
+
+        if doc_start == -1:
+            return lines if return_all_file else lines[start_line:end_line]
+
+        doc_end = doc_start
+        for i in range(doc_start, min(doc_start + 20, len(lines))):
+            if lines[i].rstrip().endswith(('"""', "'''")):
+                doc_end = i
+                break
+
+        doc_end_pos = doc_end + 1
+        if return_all_file:
+            return lines[:doc_start] + lines[doc_end_pos:]
+        body_start = doc_end + 1
+        return lines[start_line:doc_start] + lines[body_start:end_line]
+
+    @staticmethod
+    def _read_file(file_path: str) -> list[str]:
         """Читает файл в список строк"""
         with open(file_path, 'r', encoding='utf-8') as f:
             return f.readlines()
 
-    def _write_file(self, file_path: str, lines: list[str]) -> None:
+    @staticmethod
+    def _write_file(file_path: str, lines: list[str]) -> None:
         """Записывает файл"""
         with open(file_path, 'w', encoding='utf-8') as f:
             f.writelines(lines)
 
-    def _find_end_of_definition(self, lines: list[str], start_line: int) -> int:
-        """Находит конец определения def():"""
+    @staticmethod
+    def _find_end_of_definition(lines: list[str], start_line: int) -> int:
+        """Находит конец определения функции или класса (строку с двоеточием)"""
         if start_line < 0:
             return 0
         if start_line >= len(lines):
@@ -98,14 +176,7 @@ class CodeChanger:
 
         current_line = start_line
 
-        # Для классов - ищем следующую непустую строку после class
         if lines[start_line].strip().startswith('class '):
-            current_line += 1
-            while current_line < len(lines):
-                line = lines[current_line].strip()
-                if line and not line.startswith('@'):  # Пропускаем декораторы
-                    return current_line - 1
-                current_line += 1
             return start_line
 
         # Для функций/методов - ищем двоеточие
@@ -182,9 +253,12 @@ class CodeChanger:
 
         formatted_docstring = self._format_docstring(docstring, indent_str)
 
-        return lines[: end_line + 1] + formatted_docstring + lines[end_line + 1 :]
+        end_line_pos = end_line + 1
 
-    def _format_docstring(self, docstring: str, indent: str) -> list[str]:
+        return lines[:end_line_pos] + formatted_docstring + lines[end_line_pos:]
+
+    @staticmethod
+    def _format_docstring(docstring: str, indent: str) -> list[str]:
         """Форматирует docstring с правильными отступами"""
         if not docstring or not docstring.strip():
             return []
@@ -193,15 +267,11 @@ class CodeChanger:
         formatted_lines = []
 
         extra_indent = '    '
-
-        # однострочный docstring
-        if len(docstring_lines) == 1:
-            formatted_lines.append(f'{indent}{extra_indent}"""{docstring_lines[0]}"""\n')
-        else:
-            # многострочный docstring
-            formatted_lines.append(f'{indent}{extra_indent}"""\n')
-            for line in docstring_lines:
-                formatted_lines.append(f'{indent}{extra_indent}{line}\n')
-            formatted_lines.append(f'{indent}{extra_indent}"""\n')
+        formatted_lines.append(f'{indent}{extra_indent}"""\n')
+        formatted_lines.append(f'{indent}{extra_indent}{CodeChanger.GENERATION_MARKER}\n')
+        formatted_lines.append(f'{indent}{extra_indent}\n')
+        for line in docstring_lines:
+            formatted_lines.append(f'{indent}{extra_indent}{line}\n')
+        formatted_lines.append(f'{indent}{extra_indent}"""\n')
 
         return formatted_lines

@@ -1,4 +1,3 @@
-import pytest
 from pathlib import Path
 from docgen.code_changer import CodeChanger
 

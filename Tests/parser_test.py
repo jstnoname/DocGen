@@ -1,6 +1,7 @@
 import tempfile
 import os
-from parser import Parser, Position, PosWithBody
+from docgen.parser import Parser
+from docgen.records import Position, PosWithBody
 
 
 def test_simple_function():

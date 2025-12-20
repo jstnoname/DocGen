@@ -1,37 +1,8 @@
 import os.path
 import re
-from dataclasses import dataclass, field
-from typing import NamedTuple
 
-FUNC_PATTERN = re.compile(r'^def (\w+)')
-CLASS_PATTERN = re.compile(r'^class (\w+)')
-DECORATOR_PATTERN = re.compile(r'^@.*')
-
-
-class ClassOrFunc(NamedTuple):  # хз как назвать по-другому
-    """NamedTuple для отображения классов и функций: path - полный путь, pos - позиция в строке"""
-
-    path: str
-    pos: int
-
-
-@dataclass
-class Position:
-    """Класс для отображения позиции: start_line, end_line - строки (с нуля), pos - позиция в строке"""
-
-    start_line: int
-    pos: int
-    end_line: int = 0
-
-    def __repr__(self) -> str:
-        """Отображение в виде (lines:X-Y, offset:Z)"""
-        return f"(lines:{self.start_line}-{self.end_line}, offset:{self.pos})"
-
-
-@dataclass
-class PosWithBody:
-    position: Position
-    body: list[str] = field(default_factory=list)
+from docgen.code_changer import CodeChanger
+from docgen.records import ClassOrFunc, Position, PosWithBody
 
 
 class Parser:
@@ -42,17 +13,32 @@ class Parser:
     _path_to_current_file: путь к последнему прочитанному файлу
     """
 
+    FUNC_PATTERN = re.compile(r'^def (\w+)')
+    CLASS_PATTERN = re.compile(r'^class (\w+)')
+    DECORATOR_PATTERN = re.compile(r'^@.*')
+
     def __init__(self) -> None:
         self._dictionary: dict[str, PosWithBody] = {}
         self._stack: list[ClassOrFunc] = []
         self._path_to_current_file = ""
+        self._file: list[str] = []
 
     def parse_from_file(self, filename: str) -> dict[str, PosWithBody]:
         """Основная функция - считывает файл"""
-        with open(filename, 'r') as f:
+        with open(filename, 'r', encoding='utf-8-sig') as f:
             self._path_to_current_file = os.path.realpath(filename)
-            lines = f.readlines()
-        return self._parse(lines)
+            self._file = f.readlines()
+        return self._parse(self._file)
+
+    def parse_generated_from_file(self, filename: str) -> dict[str, PosWithBody]:
+        """Ищет функции и классы, которые были сгенерированы"""
+        if len(self._dictionary) == 0:
+            self.parse_from_file(filename)
+        result = {}
+        for path, pos_with_body in self._dictionary.items():
+            if CodeChanger.is_generated_docstring(self._file, pos_with_body.position):
+                result[path] = pos_with_body
+        return result
 
     def _parse(self, lines: list[str]) -> dict[str, PosWithBody]:
         """Ищет функции и классы в списке строк"""
@@ -67,10 +53,10 @@ class Parser:
                 ')'
             ):  # обработка случая функций/классов с длинным началом
                 self._update_previous(offset, i, lines)
-            if re.match(DECORATOR_PATTERN, stripped):
+            if re.match(self.DECORATOR_PATTERN, stripped):
                 decorator_counter += 1
-            if self._check_match(FUNC_PATTERN, stripped, i - decorator_counter, offset) or self._check_match(
-                CLASS_PATTERN, stripped, i - decorator_counter, offset
+            if self._check_match(self.FUNC_PATTERN, stripped, i - decorator_counter, offset) or self._check_match(
+                self.CLASS_PATTERN, stripped, i - decorator_counter, offset
             ):
                 decorator_counter = 0
                 last_offset = offset
@@ -83,9 +69,10 @@ class Parser:
         for prev in reversed(self._stack):
             if prev.pos < offset or self._dictionary[prev.path].position.end_line > 0:
                 continue
-            start, end = self._dictionary[prev.path].position.start_line, line_num - 1
-            self._dictionary[prev.path].position.end_line = end
-            self._dictionary[prev.path].body = lines[start:end]
+            self._dictionary[prev.path].position.end_line = line_num - 1
+            self._dictionary[prev.path].body = CodeChanger.remove_docstring(
+                lines, self._dictionary[prev.path].position, False
+            )
 
     def _check_match(self, pattern: re.Pattern[str], line: str, line_num: int, offset: int) -> bool:
         """Проверяет, является ли строка функцией/классом, если да - добавляет её"""
@@ -96,7 +83,7 @@ class Parser:
         return False
 
     def _add(self, func_name: str, line_num: int, pos: int) -> None:
-        """Добавляет функции и классы в словарь и стак"""
+        """Добавляет функции и классы в словарь и стэк"""
         if pos == 0 and len(self._stack) != 0:
             self._stack.clear()
         if len(self._stack) == 0:
