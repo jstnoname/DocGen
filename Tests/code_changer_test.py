@@ -1,6 +1,5 @@
-import pytest
 from pathlib import Path
-from code_changer import CodeChanger
+from docgen.code_changer import CodeChanger
 
 
 class Position:
