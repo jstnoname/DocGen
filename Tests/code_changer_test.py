@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from docgen.code_changer import CodeChanger
-from docgen.records import Position, PosWithDoc
+from fiit_docgen.code_changer import CodeChanger
+from fiit_docgen.records import Position, PosWithDoc
 
 
 def test_convert_ai_data() -> None:

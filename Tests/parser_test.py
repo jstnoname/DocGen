@@ -1,8 +1,8 @@
 import os
 import tempfile
 
-from docgen.parser import Parser
-from docgen.records import Position, PosWithBody
+from fiit_docgen.parser import Parser
+from fiit_docgen.records import Position, PosWithBody
 
 
 def test_simple_function() -> None:

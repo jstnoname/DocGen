@@ -1,4 +1,4 @@
-from docgen.records import Element, Position, PosWithDoc
+from fiit_docgen.records import Element, Position, PosWithDoc
 
 
 class CodeChanger:

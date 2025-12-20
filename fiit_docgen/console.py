@@ -3,10 +3,10 @@ import os
 import sys
 from pathlib import Path
 
-from docgen.ai_requester import AIRequester
-from docgen.code_changer import CodeChanger
-from docgen.parser import Parser
-from docgen.records import PosWithBody, PosWithDoc
+from fiit_docgen.ai_requester import AIRequester
+from fiit_docgen.code_changer import CodeChanger
+from fiit_docgen.parser import Parser
+from fiit_docgen.records import PosWithBody, PosWithDoc
 
 
 class DocGen:

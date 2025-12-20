@@ -1,8 +1,8 @@
 import os.path
 import re
 
-from docgen.code_changer import CodeChanger
-from docgen.records import ClassOrFunc, Position, PosWithBody
+from fiit_docgen.code_changer import CodeChanger
+from fiit_docgen.records import ClassOrFunc, Position, PosWithBody
 
 
 class Parser:

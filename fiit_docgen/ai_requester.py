@@ -1,6 +1,6 @@
 ﻿import sys
 
-from docgen.records import BaseAIRequester, PosWithBody, PosWithDoc
+from fiit_docgen.records import BaseAIRequester, PosWithBody, PosWithDoc
 from requests import post
 
 
