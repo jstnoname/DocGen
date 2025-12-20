@@ -21,13 +21,14 @@ class Parser:
         self._dictionary: dict[str, PosWithBody] = {}
         self._stack: list[ClassOrFunc] = []
         self._path_to_current_file = ""
+        self._file: list[str] = []
 
     def parse_from_file(self, filename: str) -> dict[str, PosWithBody]:
         """Основная функция - считывает файл"""
         with open(filename, 'r', encoding='utf-8-sig') as f:
             self._path_to_current_file = os.path.realpath(filename)
-            lines = f.readlines()
-        return self._parse(lines)
+            self._file = f.readlines()
+        return self._parse(self._file)
 
     def parse_generated_from_file(self, filename: str) -> dict[str, PosWithBody]:
         """Ищет функции и классы, которые были сгенерированы"""
@@ -35,13 +36,8 @@ class Parser:
             self.parse_from_file(filename)
         result = {}
         for path, pos_with_body in self._dictionary.items():
-            for line in pos_with_body.body[1:]:
-                if "def" in line or "class" in line:
-                    break
-                if "\"\"\"" in line:
-                    if CodeChanger.GENERATION_MARKER in line:
-                        result[path] = pos_with_body
-                    break
+            if CodeChanger.is_generated_docstring(self._file, pos_with_body.position):
+                result[path] = pos_with_body
         return result
 
     def _parse(self, lines: list[str]) -> dict[str, PosWithBody]:
@@ -73,9 +69,10 @@ class Parser:
         for prev in reversed(self._stack):
             if prev.pos < offset or self._dictionary[prev.path].position.end_line > 0:
                 continue
-            start, end = self._dictionary[prev.path].position.start_line, line_num - 1
-            self._dictionary[prev.path].position.end_line = end
-            self._dictionary[prev.path].body = lines[start:end]
+            self._dictionary[prev.path].position.end_line = line_num - 1
+            self._dictionary[prev.path].body = CodeChanger.remove_docstring(
+                lines, self._dictionary[prev.path].position, False
+            )
 
     def _check_match(self, pattern: re.Pattern[str], line: str, line_num: int, offset: int) -> bool:
         """Проверяет, является ли строка функцией/классом, если да - добавляет её"""

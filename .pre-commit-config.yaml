@@ -27,8 +27,9 @@
         - "--config=pyproject.toml"
 
   - repo: https://github.com/PyCQA/flake8
-    rev: 7.3.0
+    rev: 7.0.0
     hooks:
       - id: flake8
-        args:
-        - "--max-line-length=120"
+        entry: pflake8
+        additional_dependencies:
+          - pyproject-flake8==7.0.0
