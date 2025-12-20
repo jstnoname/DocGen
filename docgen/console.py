@@ -16,33 +16,23 @@ class DocGen:
         self.parser = argparse.ArgumentParser(description='DocGen - automatically generate documentation for your code')
         self._setup_arguments()
         self._code_path: Path | None = None
-        self._config_path: Path | None = None
         self._api_key: str | None = None
         self._regen: bool = False
-        self._full: bool = False
 
     def _setup_arguments(self) -> None:
         self.parser.add_argument('path', type=Path, help='Path to the code file')
-        self.parser.add_argument('--config', type=Path, default='pyproject.toml', help='Path to config file')
         self.parser.add_argument('--api-key', '-a', type=str, help='Gemini API key')
         self.parser.add_argument('-r', '--regen', action='store_true', help='Regenerate existing documentation')
-        self.parser.add_argument(
-            '-f', '--full', action='store_true', help='Generate documentation for all objects in file'
-        )
 
     def _parse_arguments(self) -> None:
         args = self.parser.parse_args()
         self._code_path = args.path
-        self._config_path = args.config
         self._api_key = args.api_key or os.getenv('GEMINI_API_KEY')
         self._regen = args.regen
-        self._full = args.full
 
     def _validate_paths(self) -> bool:
         if not self._check_path(self._code_path):
             return False
-        if self._config_path and self._config_path != Path('pyproject.toml'):
-            return self._check_path(self._config_path)
         return True
 
     def _validate_api_key(self) -> bool:
