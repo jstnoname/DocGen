@@ -62,7 +62,7 @@ class CodeChanger:
                 if self.regen:
                     # Заменяем только сгенерированную документацию и вставляем где ее нет
                     if self._has_existing_docstring(lines, position):
-                        if self.is_generated_docstring(lines, position):
+                        if CodeChanger.is_generated_docstring(lines, position):
                             lines = self._replace_docstring(lines, position, docstring)
                             modified = True
                     else:
@@ -94,33 +94,20 @@ class CodeChanger:
         end_line = CodeChanger._find_end_of_definition(lines, start_line)
 
         for i in range(end_line + 1, min(end_line + 10, len(lines))):
+            if CodeChanger.GENERATION_MARKER in lines[i]:
+                return True
+
             line = lines[i].strip()
-
-            if not line or line.startswith('#'):
-                continue
-
-            if line.startswith(('"""', "'''")):
-                doc_lines = []
-                current_line = i
-
-                while current_line < len(lines):
-                    doc_lines.append(lines[current_line])
-                    if lines[current_line].rstrip().endswith(('"""', "'''")):
-                        break
-                    current_line += 1
-
-                for doc_line in doc_lines:
-                    if CodeChanger.GENERATION_MARKER in doc_line:
-                        return True
-
+            if line and not line.startswith('#'):
+                if line.startswith(('"""', "'''")):
+                    continue
                 return False
-            break
 
         return False
 
     def _replace_docstring(self, lines: list[str], position: Position, new_doc: str) -> list[str]:
         """Заменяет существующий docstring на новый"""
-        return self._insert_docstring(self.remove_docstring(lines, position), position, new_doc)
+        return self._insert_docstring(CodeChanger.remove_docstring(lines, position), position, new_doc)
 
     @staticmethod
     def remove_docstring(lines: list[str], position: Position, return_all_file: bool = True) -> list[str]:
@@ -142,9 +129,13 @@ class CodeChanger:
         if doc_start == -1:
             return lines if return_all_file else lines[start_line:end_line]
 
+        quote_type = lines[doc_start].strip()[:3]
         doc_end = doc_start
         for i in range(doc_start, min(doc_start + 20, len(lines))):
-            if lines[i].rstrip().endswith(('"""', "'''")):
+            if i > doc_start and lines[i].rstrip().endswith(quote_type):
+                doc_end = i
+                break
+            elif i == doc_start and lines[i].rstrip().endswith(quote_type) and len(lines[i].strip()) > 3:
                 doc_end = i
                 break
 

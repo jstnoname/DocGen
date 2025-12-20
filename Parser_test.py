@@ -1,5 +1,5 @@
-import tempfile
 import os
+import tempfile
 from parser import Parser, Position, PosWithBody
 
 
@@ -43,11 +43,7 @@ def test_simple_class():
     assert method_key in result
     assert result[class_key].position.start_line == 0
     assert result[class_key].position.end_line == 3
-    assert result[class_key].body == [
-        "class MyClass:\n",
-        "    def method(self):\n",
-        "        pass\n"
-    ]
+    assert result[class_key].body == ["class MyClass:\n", "    def method(self):\n", "        pass\n"]
     assert result[method_key].position.start_line == 1
     assert result[method_key].position.end_line == 3
     assert result[method_key].body == ["    def method(self):\n", "        pass\n"]
@@ -81,7 +77,7 @@ def test_nested_functions():
         "def outer():\n",
         "    def inner():\n",
         "        return 42\n",
-        "    return inner()\n"
+        "    return inner()\n",
     ]
 
 
@@ -117,6 +113,7 @@ def A():
     assert a_key in result
     assert result[a_key].position.start_line == 4
     assert result[a_key].body == ["def A():\n", "    return 1\n"]
+
 
 def test_empty_function_body():
     # Функция с пустым телом (только pass)
