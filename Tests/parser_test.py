@@ -13,7 +13,7 @@ def test_simple_function() -> None:
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
         f.write(code)
         f.flush()
-        parser = Parser()
+        parser = Parser(f.name)
         result = parser.parse_from_file(f.name)
 
     path = os.path.realpath(f.name)
@@ -34,7 +34,7 @@ def test_simple_class() -> None:
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
         f.write(code)
         f.flush()
-        parser = Parser()
+        parser = Parser(f.name)
         result = parser.parse_from_file(f.name)
 
     path = os.path.realpath(f.name)
@@ -61,7 +61,7 @@ def test_nested_functions() -> None:
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
         f.write(code)
         f.flush()
-        parser = Parser()
+        parser = Parser(f.name)
         result = parser.parse_from_file(f.name)
 
     path = os.path.realpath(f.name)
@@ -89,7 +89,7 @@ def test_empty_file() -> None:
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
         f.write(code)
         f.flush()
-        parser = Parser()
+        parser = Parser(f.name)
         result = parser.parse_from_file(f.name)
 
     assert result == {}
@@ -107,7 +107,7 @@ def A():
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
         f.write(code)
         f.flush()
-        parser = Parser()
+        parser = Parser(f.name)
         result = parser.parse_from_file(f.name)
 
     path = os.path.realpath(f.name)
@@ -125,7 +125,7 @@ def test_empty_function_body() -> None:
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
         f.write(code)
         f.flush()
-        parser = Parser()
+        parser = Parser(f.name)
         result = parser.parse_from_file(f.name)
 
     path = os.path.realpath(f.name)
@@ -142,7 +142,7 @@ def test_class_with_empty_body() -> None:
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
         f.write(code)
         f.flush()
-        parser = Parser()
+        parser = Parser(f.name)
         result = parser.parse_from_file(f.name)
 
     path = os.path.realpath(f.name)
@@ -161,7 +161,7 @@ def test_nested_class_in_function() -> None:
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
         f.write(code)
         f.flush()
-        parser = Parser()
+        parser = Parser(f.name)
         result = parser.parse_from_file(f.name)
 
     path = os.path.realpath(f.name)
@@ -185,7 +185,7 @@ def test_correct_end_line_after_multiline_function() -> None:
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
         f.write(code)
         f.flush()
-        parser = Parser()
+        parser = Parser(f.name)
         result = parser.parse_from_file(f.name)
 
     path = os.path.realpath(f.name)

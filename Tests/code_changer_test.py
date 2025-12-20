@@ -33,7 +33,7 @@ def test_has_existing_docstring_no_docstring() -> None:
     lines = ["def foo():\n", "    pass\n"]
     position = Position(0, 0)
     changer = CodeChanger()
-    assert not changer._has_existing_docstring(lines, position)
+    assert not changer.has_existing_docstring(lines, position)
 
 
 def test_has_existing_docstring_with_docstring() -> None:
@@ -41,7 +41,7 @@ def test_has_existing_docstring_with_docstring() -> None:
     lines = ["def foo():\n", '    """This is a docstring."""\n', "    pass\n"]
     position = Position(0, 0)
     changer = CodeChanger()
-    assert changer._has_existing_docstring(lines, position)
+    assert changer.has_existing_docstring(lines, position)
 
 
 def test_insert_docstring_function() -> None:

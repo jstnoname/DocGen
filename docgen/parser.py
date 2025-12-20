@@ -17,23 +17,38 @@ class Parser:
     CLASS_PATTERN = re.compile(r'^class (\w+)')
     DECORATOR_PATTERN = re.compile(r'^@.*')
 
-    def __init__(self) -> None:
-        self._dictionary: dict[str, PosWithBody] = {}
+    def __init__(self, path_to_file: str) -> None:
         self._stack: list[ClassOrFunc] = []
-        self._path_to_current_file = ""
+        self._path_to_current_file = path_to_file
         self._file: list[str] = []
+        self._dictionary: dict[str, PosWithBody] = {}
 
-    def parse_from_file(self, filename: str) -> dict[str, PosWithBody]:
+        self._dictionary = self._parse_all_from_file(self._path_to_current_file)
+
+    @property
+    def objects_length(self) -> int:
+        return len(self._dictionary)
+
+    def _parse_all_from_file(self, filename: str) -> dict[str, PosWithBody]:
         """Основная функция - считывает файл"""
         with open(filename, 'r', encoding='utf-8-sig') as f:
             self._path_to_current_file = os.path.realpath(filename)
             self._file = f.readlines()
         return self._parse(self._file)
 
+    def parse_from_file(self, filename: str) -> dict[str, PosWithBody]:
+        if len(self._dictionary) == 0:
+            self._parse_all_from_file(filename)
+        result = {}
+        for path, pos_with_body in self._dictionary.items():
+            if not CodeChanger.has_existing_docstring(self._file, pos_with_body.position):
+                result[path] = pos_with_body
+        return result
+
     def parse_generated_from_file(self, filename: str) -> dict[str, PosWithBody]:
         """Ищет функции и классы, которые были сгенерированы"""
         if len(self._dictionary) == 0:
-            self.parse_from_file(filename)
+            self._parse_all_from_file(filename)
         result = {}
         for path, pos_with_body in self._dictionary.items():
             if CodeChanger.is_generated_docstring(self._file, pos_with_body.position):

@@ -61,7 +61,7 @@ class CodeChanger:
 
                 if self.regen:
                     # Заменяем только сгенерированную документацию и вставляем где ее нет
-                    if self._has_existing_docstring(lines, position):
+                    if CodeChanger.has_existing_docstring(lines, position):
                         if CodeChanger.is_generated_docstring(lines, position):
                             lines = self._replace_docstring(lines, position, docstring)
                             modified = True
@@ -69,7 +69,7 @@ class CodeChanger:
                         lines = self._insert_docstring(lines, position, docstring)
                         modified = True
                 else:
-                    if not self._has_existing_docstring(lines, position):
+                    if not CodeChanger.has_existing_docstring(lines, position):
                         lines = self._insert_docstring(lines, position, docstring)
                         modified = True
 
@@ -202,14 +202,15 @@ class CodeChanger:
 
         return start_line
 
-    def _has_existing_docstring(self, lines: list[str], position: Position) -> bool:
+    @staticmethod
+    def has_existing_docstring(lines: list[str], position: Position) -> bool:
         """Проверяет, есть ли уже docstring после указанной позиции"""
         start_line = position.start_line
 
         if start_line >= len(lines):
             return False
 
-        end_line = self._find_end_of_definition(lines, start_line)
+        end_line = CodeChanger._find_end_of_definition(lines, start_line)
 
         if end_line >= len(lines) - 1:
             return False

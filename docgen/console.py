@@ -44,13 +44,13 @@ class DocGen:
 
     def _run_parser(self) -> dict[str, PosWithBody]:
         print(f'Parsing file: {self._code_path}')
-        parser = Parser()
+        parser = Parser(str(self._code_path))
         if self._regen:
             result = parser.parse_generated_from_file(str(self._code_path))
-            print(f'Found {len(result)} items with generated documentation to regenerate')
+            print(f'Found {len(result)} items of {parser.objects_length} with generated documentation to regenerate')
         else:
             result = parser.parse_from_file(str(self._code_path))
-            print(f'Found {len(result)} items to document')
+            print(f'Found {len(result)} items of {parser.objects_length} to document')
         return result
 
     def _generate_documentation(self, parsed_data: dict[str, PosWithBody]) -> dict[str, PosWithDoc]:
