@@ -6,7 +6,7 @@ Not more! DocGen is package written on python to generate
 documentation to your code by one command
 
 ## How to download
-Install through `pip install -i https://test.pypi.org/simple/ fiit-docgen==1.0.1` <br>
+Install through `pip install -i https://test.pypi.org/simple/ fiit-docgen` <br>
 Or go to tags and click on "Release" or click on "Releases" on main page, after download file with .whl extension and
 install this file through pip: `pip install (PATH TO FILE)`
 
