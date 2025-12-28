@@ -70,8 +70,8 @@ class Parser:
                 self._update_previous(offset, i, lines)
             if re.match(self.DECORATOR_PATTERN, stripped):
                 decorator_counter += 1
-            if self._check_match(self.FUNC_PATTERN, stripped, i - decorator_counter, offset) or self._check_match(
-                self.CLASS_PATTERN, stripped, i - decorator_counter, offset
+            if self._check_match(self.FUNC_PATTERN, stripped, i, decorator_counter, offset) or self._check_match(
+                self.CLASS_PATTERN, stripped, i, decorator_counter, offset
             ):
                 decorator_counter = 0
                 last_offset = offset
@@ -88,16 +88,19 @@ class Parser:
             self._dictionary[prev.path].body = CodeChanger.remove_docstring(
                 lines, self._dictionary[prev.path].position, False
             )
+            self._dictionary[prev.path].position.start_line += self._dictionary[prev.path].position.decorators
 
-    def _check_match(self, pattern: re.Pattern[str], line: str, line_num: int, offset: int) -> bool:
+    def _check_match(
+        self, pattern: re.Pattern[str], line: str, line_num: int, decorator_counter: int, offset: int
+    ) -> bool:
         """Проверяет, является ли строка функцией/классом, если да - добавляет её"""
         match = re.match(pattern, line)
         if match:
-            self._add(match.group(1), line_num, offset)
+            self._add(match.group(1), line_num, decorator_counter, offset)
             return True
         return False
 
-    def _add(self, func_name: str, line_num: int, pos: int) -> None:
+    def _add(self, func_name: str, line_num: int, decorator_counter: int, pos: int) -> None:
         """Добавляет функции и классы в словарь и стэк"""
         if pos == 0 and len(self._stack) != 0:
             self._stack.clear()
@@ -110,4 +113,6 @@ class Parser:
                 previous = self._stack[-1]
             class_or_func = ClassOrFunc(f"{previous.path}/{func_name}", pos)
         self._stack.append(class_or_func)
-        self._dictionary[class_or_func.path] = PosWithBody(Position(line_num, pos))
+        self._dictionary[class_or_func.path] = PosWithBody(
+            Position(line_num - decorator_counter, pos, decorators=decorator_counter)
+        )
