@@ -9,6 +9,7 @@ class Position:
     start_line: int
     pos: int
     end_line: int = 0
+    decorators: int = 0
 
     def __repr__(self) -> str:
         return f"(lines:{self.start_line}-{self.end_line}, offset:{self.pos})"
