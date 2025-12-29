@@ -13,7 +13,7 @@ class Parser:
     _path_to_current_file: путь к последнему прочитанному файлу
     """
 
-    FUNC_PATTERN = re.compile(r'^def (\w+)')
+    FUNC_PATTERN = re.compile(r'^(?:async )?def (\w+)')
     CLASS_PATTERN = re.compile(r'^class (\w+)')
     DECORATOR_PATTERN = re.compile(r'^@.*')
 
