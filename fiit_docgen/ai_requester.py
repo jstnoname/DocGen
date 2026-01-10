@@ -48,7 +48,7 @@ class AIRequester(BaseAIRequester):
         response = post(self._full_url_to_ai, json=self._body, headers={"Content-Type": "application/json"})
 
         if response.status_code == 429:
-            print(f"To many requests. Please retry again after {response.json()["error"]["details"][-1]["retryDelay"]}")
+            print(f"To many requests. Please retry again after {response.json()['error']['details'][-1]['retryDelay']}")
             sys.exit(-1)
 
         return response.json()["candidates"][0]["content"]["parts"][0]["text"] if response.status_code == 200 else None
