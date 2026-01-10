@@ -1,6 +1,6 @@
 [project]
 name = "fiit_docgen"
-version = "1.0.3"
+version = "1.0.4"
 description = "DocGen. Easy generate documentation to your code"
 readme = "README.md"
 requires-python = ">=3.12,<4.0"
@@ -13,8 +13,9 @@ authors = [
   { name = "Nikita Raskovalov" }
 ]
 
-[tool.poetry.dependencies]
-requests = ">=2.32.5"
+dependencies = [
+  "requests>=2.32.5"
+]
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.15.0"
